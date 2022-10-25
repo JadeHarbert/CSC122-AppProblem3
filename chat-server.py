@@ -27,7 +27,7 @@ while isServerRunning:
             print("Welcome to the chat room! \n"
                   "Type EXIT to end session \n"
                   "Type QUIT to close server \n"
-                  "Put a period at the end of chat to send message\n\n"
+                  "Put a period at the end of chat to pass baton to client\n\n"
                   "Waiting for response from client.\n"
                   )
 
@@ -47,8 +47,20 @@ while isServerRunning:
                     print("\nAwaiting another connection\n")
                     conn.close()
 
+                # Else if the client doesn't want to end the session,
+                # then we keep printing the clients messages
                 else:
                     print("From Client: " + data)
+
+                    # If the client hasn't passed the baton over to the server,
+                    # then we keep receiving messages from the client
+                    while data[-1] != ".":
+                        data = conn.recv(1024)
+                        data = data.decode()
+                        if not data:
+                            break
+                        print("From Client: " + data)
+
                     msg = input("Enter Msg: ")
 
                     # If the user wants to close the server
@@ -77,13 +89,12 @@ while isServerRunning:
                         isConnected = False
                     else:
 
-                        # Checks to see if the client wants to send their message.
-                        # Continuously asks for input until the client is ready to send
+                        # Keeps sending messages until the server is ready
+                        # to pass the baton
                         while msg[-1] != ".":
-                            msg += "\n\t\t\t" + input()
+                            msg = msg.encode()
+                            conn.sendall(msg)
+                            msg = input("Enter Msg: ")
 
-                        # Send message to client
                         msg = msg.encode()
                         conn.sendall(msg)
-
-

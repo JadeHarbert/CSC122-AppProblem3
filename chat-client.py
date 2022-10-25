@@ -18,7 +18,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     print("Welcome to the chat room! \n"
           "Type EXIT to end session \n"
-          "Put a period at the end of chat to send message")
+          "Put a period at the end of chat to pass the baton to server")
 
     # While the chat session is still going
     while isConnected:
@@ -30,18 +30,33 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.sendall(msg)
             break
 
-        # Checks to see if the client wants to send their message.
-        # Continuously asks for input until the client is ready to send
+        # If the client isn't ready to pass the baton,
+        # then we keep sending messages
         while msg[-1] != ".":
-            msg += "\n\t\t\t" + input()
+            msg = msg.encode()
+            s.sendall(msg)
+            msg = input("Enter Msg: ")
 
-        # Sends message
         msg = msg.encode()
         s.sendall(msg)
 
         # Receives message from server
         data = s.recv(1024)
         data = data.decode()
+        if not data:
+            break
+
+        # Checks to make sure the server doesn't want to quit or exit
+        if data != "EXIT" and data != "QUIT":
+
+            # If the server hasn't passed the baton to the client,
+            # then we continuously print messages from the server
+            while data[-1] != ".":
+                print("From Server: " + data)
+                data = s.recv(1024)
+                data = data.decode()
+                if not data:
+                    break
 
         # If the server wants to end the chat session, then we close the connection
         # We also set the connection variable to false so the program ends
